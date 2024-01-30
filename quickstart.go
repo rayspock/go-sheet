@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"google.golang.org/api/option"
 	"log"
 	"net/http"
 	"os"
@@ -70,7 +70,7 @@ func saveToken(path string, token *oauth2.Token) {
 }
 
 func main() {
-	b, err := ioutil.ReadFile("credentials.json")
+	b, err := os.ReadFile("credentials.json")
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
@@ -82,7 +82,7 @@ func main() {
 	}
 	client := getClient(config)
 
-	srv, err := sheets.New(client)
+	srv, err := sheets.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}
@@ -90,13 +90,13 @@ func main() {
 	// Prints the names and majors of students in a sample spreadsheet:
 	// https://docs.google.com/spreadsheets/d/1X-85tmSTgokBuKYK5YoCMsMRHhADFetTzZLUmNS09hY/edit
 	spreadsheetID := "1X-85tmSTgokBuKYK5YoCMsMRHhADFetTzZLUmNS09hY"
-	  
+
 	req := sheets.Request{
 		InsertRange: &sheets.InsertRangeRequest{
 			Range: &sheets.GridRange{
-				SheetId: 0,
+				SheetId:       0,
 				StartRowIndex: 0,
-				EndRowIndex: 1,
+				EndRowIndex:   1,
 			},
 			ShiftDimension: "ROWS",
 		},
@@ -104,33 +104,33 @@ func main() {
 
 	req2 := sheets.Request{
 		PasteData: &sheets.PasteDataRequest{
-			Data: "sample1, sample2, sample3",
-			Type: "PASTE_NORMAL",
+			Data:      "sample1, sample2, sample3",
+			Type:      "PASTE_NORMAL",
 			Delimiter: ",",
 			Coordinate: &sheets.GridCoordinate{
-				SheetId: 0,
+				SheetId:  0,
 				RowIndex: 0,
 			},
 		},
 	}
 
 	requests := []*sheets.Request{&req, &req2} // TODO: Update placeholder value.
-	
-	rb := &sheets.BatchUpdateSpreadsheetRequest{
-			Requests: requests,
 
-			// TODO: Add desired fields of the request body.
+	rb := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: requests,
+
+		// TODO: Add desired fields of the request body.
 	}
 
 	ctx := context.Background()
 
 	resp, err := srv.Spreadsheets.BatchUpdate(spreadsheetID, rb).Context(ctx).Do()
 	if err != nil {
-			log.Fatal(err)
+		log.Fatal(err)
 	}
 
 	// TODO: Change code below to process the `resp` object:
-	fmt.Printf("%#v\n", resp)    
+	fmt.Printf("%#v\n", resp)
 
 	// readRange := "Sheet1!A2:E"
 	// resp, err := srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
